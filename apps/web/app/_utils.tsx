@@ -137,7 +137,10 @@ export const generateMeetingMetadata = async (
     origin,
     pathname
   );
-  const image = SEO_IMG_OGIMG + (await constructMeetingImage(meeting));
+  let image = new URL(decodeURIComponent(await constructMeetingImage(meeting)), WEBAPP_URL).toString();
+  if (meeting.profile.image) {
+    image = new URL(meeting.profile.image, WEBAPP_URL).toString();
+  }
 
   return {
     ...metadata,
