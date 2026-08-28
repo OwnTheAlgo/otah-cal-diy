@@ -16,7 +16,7 @@ const safeGet = async <T = any>(key: string): Promise<T | undefined> => {
   }
 };
 
-// Vercel/Edge rejects nonASCII header values (see: https://github.com/vercel/next.js/issues/85631)
+// Vercel/Edge rejects nonâ€‘ASCII header values (see: https://github.com/vercel/next.js/issues/85631)
 const isAscii = (s: string) => {
   for (let i = 0; i < s.length; i++) if (s.charCodeAt(i) > 0x7f) return false;
   return true;
@@ -32,7 +32,7 @@ const sanitizeRequestHeaders = (headers: Iterable<[string, string]>): Headers =>
     if (!isAscii(name)) continue;
     let value = raw;
     if (!isAscii(value)) {
-      // Heuristic: if the string contains common mojibake markers (Ã: 0xC3, Â: 0xC2),
+      // Heuristic: if the string contains common mojibake markers (Ãƒ: 0xC3, Ã‚: 0xC2),
       // prefer a simple strip (avoids introducing spurious ASCII letters like 'A').
       let hasMojibakeMarker = false;
       for (let i = 0; i < value.length; i++) {
