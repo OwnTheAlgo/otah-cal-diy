@@ -4,6 +4,10 @@ import { get } from "@vercel/edge-config";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+const OTAH_MEMBER_BOOKING_PATHS: Record<string, string> = {
+  "jey.collab.ninja": "/jey/agentic-engineering-intro",
+};
+
 const safeGet = async <T = any>(key: string): Promise<T | undefined> => {
   try {
     return get<T>(key);
@@ -12,7 +16,7 @@ const safeGet = async <T = any>(key: string): Promise<T | undefined> => {
   }
 };
 
-// Vercel/Edge rejects nonâ€‘ASCII header values (see: https://github.com/vercel/next.js/issues/85631)
+// Vercel/Edge rejects nonASCII header values (see: https://github.com/vercel/next.js/issues/85631)
 const isAscii = (s: string) => {
   for (let i = 0; i < s.length; i++) if (s.charCodeAt(i) > 0x7f) return false;
   return true;
@@ -28,7 +32,7 @@ const sanitizeRequestHeaders = (headers: Iterable<[string, string]>): Headers =>
     if (!isAscii(name)) continue;
     let value = raw;
     if (!isAscii(value)) {
-      // Heuristic: if the string contains common mojibake markers (Ãƒ: 0xC3, Ã‚: 0xC2),
+      // Heuristic: if the string contains common mojibake markers (Ã: 0xC3, Â: 0xC2),
       // prefer a simple strip (avoids introducing spurious ASCII letters like 'A').
       let hasMojibakeMarker = false;
       for (let i = 0; i < value.length; i++) {
@@ -67,6 +71,14 @@ const shouldEnforceCsp = (url: URL) => {
 
 const proxy = async (req: NextRequest): Promise<NextResponse<unknown>> => {
   const url = req.nextUrl;
+  const forwardedHost = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
+  const hostname = forwardedHost.split(":")[0].toLowerCase();
+  const memberBookingPath = OTAH_MEMBER_BOOKING_PATHS[hostname];
+
+  if (memberBookingPath && url.pathname === "/") {
+    return NextResponse.redirect(new URL(memberBookingPath, process.env.NEXT_PUBLIC_WEBAPP_URL ?? req.url), 308);
+  }
+
   const reqWithEnrichedHeaders = enrichRequestWithHeaders({ req });
   const requestHeaders = new Headers(reqWithEnrichedHeaders.headers);
 
@@ -163,7 +175,7 @@ function enrichRequestWithHeaders({ req }: { req: NextRequest }) {
 }
 
 export const config = {
-  matcher: ["/auth/login", "/login", "/apps/installed", "/auth/logout", "/:path*/embed", "/availability", "/api/auth/signup"],
+  matcher: ["/", "/auth/login", "/login", "/apps/installed", "/auth/logout", "/:path*/embed", "/availability", "/api/auth/signup"],
 };
 
 export default proxy;
