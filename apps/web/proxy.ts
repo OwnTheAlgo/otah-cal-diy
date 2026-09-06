@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const OTAH_MEMBER_BOOKING_PATHS: Record<string, string> = {
-  "jey.collab.ninja": "/jey/schedule-meet?user=jey",
+  "jey.collab.ninja": "/jey/schedule-meet?user=jey&duration=20&overlayCalendar=true",
 };
 
 const safeGet = async <T = any>(key: string): Promise<T | undefined> => {
@@ -76,11 +76,7 @@ const proxy = async (req: NextRequest): Promise<NextResponse<unknown>> => {
   const memberBookingPath = OTAH_MEMBER_BOOKING_PATHS[hostname];
 
   if (memberBookingPath && url.pathname === "/") {
-    const [pathname, query] = memberBookingPath.split("?", 2);
-    const destination = req.nextUrl.clone();
-    destination.pathname = pathname;
-    destination.search = query ? `?${query}` : "";
-    return NextResponse.rewrite(destination);
+    return NextResponse.redirect(new URL(memberBookingPath, process.env.NEXT_PUBLIC_WEBAPP_URL ?? req.url), 308);
   }
 
   const reqWithEnrichedHeaders = enrichRequestWithHeaders({ req });
