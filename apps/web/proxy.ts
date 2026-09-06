@@ -76,7 +76,11 @@ const proxy = async (req: NextRequest): Promise<NextResponse<unknown>> => {
   const memberBookingPath = OTAH_MEMBER_BOOKING_PATHS[hostname];
 
   if (memberBookingPath && url.pathname === "/") {
-    return NextResponse.redirect(new URL(memberBookingPath, process.env.NEXT_PUBLIC_WEBAPP_URL ?? req.url), 308);
+    const [pathname, query] = memberBookingPath.split("?", 2);
+    const destination = req.nextUrl.clone();
+    destination.pathname = pathname;
+    destination.search = query ? `?${query}` : "";
+    return NextResponse.rewrite(destination);
   }
 
   const reqWithEnrichedHeaders = enrichRequestWithHeaders({ req });
