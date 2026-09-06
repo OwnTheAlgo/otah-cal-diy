@@ -74,9 +74,15 @@ const proxy = async (req: NextRequest): Promise<NextResponse<unknown>> => {
   const forwardedHost = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "";
   const hostname = forwardedHost.split(":")[0].toLowerCase();
   const memberBookingPath = OTAH_MEMBER_BOOKING_PATHS[hostname];
+  // Browsers may still cache the original permanent redirect to this retired event URL.
+  const legacyBookingPath = url.pathname === "/jey/agentic-engineering-intro" ? "/jey/" : undefined;
+  const bookingPath = url.pathname === "/" ? memberBookingPath : legacyBookingPath;
 
-  if (memberBookingPath && url.pathname === "/") {
-    return NextResponse.redirect(new URL(memberBookingPath, process.env.NEXT_PUBLIC_WEBAPP_URL ?? req.url), 308);
+  if (bookingPath) {
+    return NextResponse.redirect(new URL(bookingPath, process.env.NEXT_PUBLIC_WEBAPP_URL ?? req.url), {
+      status: 307,
+      headers: { "Cache-Control": "no-store" },
+    });
   }
 
   const reqWithEnrichedHeaders = enrichRequestWithHeaders({ req });
@@ -175,7 +181,17 @@ function enrichRequestWithHeaders({ req }: { req: NextRequest }) {
 }
 
 export const config = {
-  matcher: ["/", "/auth/login", "/login", "/apps/installed", "/auth/logout", "/:path*/embed", "/availability", "/api/auth/signup"],
+  matcher: [
+    "/",
+    "/jey/agentic-engineering-intro",
+    "/auth/login",
+    "/login",
+    "/apps/installed",
+    "/auth/logout",
+    "/:path*/embed",
+    "/availability",
+    "/api/auth/signup",
+  ],
 };
 
 export default proxy;

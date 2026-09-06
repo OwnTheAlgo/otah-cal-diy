@@ -6,8 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // We'll test the wrapped proxy as it would be used in production
-import proxy from "./proxy";
-import { config } from "./proxy";
+import proxy, { config } from "./proxy";
 
 // Mock dependencies at module level
 vi.mock("@vercel/edge-config", () => ({
@@ -169,6 +168,34 @@ describe("Middleware Integration Tests", () => {
         expectStatus(res, 200);
         expect(getHeader(res, "x-middleware-next")).toBe("1");
       }
+    });
+  });
+
+  describe("Jey booking redirects", () => {
+    it.each([
+      "https://jey.collab.ninja/",
+      "https://collab.ninja/jey/agentic-engineering-intro",
+      "https://collab.ninja/jey/agentic-engineering-intro?overlayCalendar=true",
+    ])("recovers %s without caching another permanent redirect", async (url) => {
+      const req = createTestRequest({ url, headers: { host: new URL(url).host } });
+      const res = await callProxy(req);
+
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toBe(`${WEBAPP_URL}/jey/`);
+      expect(res.headers.get("cache-control")).toBe("no-store");
+    });
+
+    it.each([
+      "/jey/",
+      "/jey/schedule-meet",
+      "/michael/agentic-engineering-intro",
+      "/",
+    ])("leaves the central host's %s route unchanged", async (path) => {
+      const req = createTestRequest({ url: `${WEBAPP_URL}${path}` });
+      const res = await callProxy(req);
+
+      expect(res.headers.get("location")).toBeNull();
+      expect(res.headers.get("x-middleware-next")).toBe("1");
     });
   });
 
@@ -445,6 +472,8 @@ describe("Middleware Matcher Configuration", () => {
   const matcher: string[] = config.matcher;
 
   it("should include all core middleware routes", () => {
+    expect(matcher).toContain("/");
+    expect(matcher).toContain("/jey/agentic-engineering-intro");
     expect(matcher).toContain("/auth/login");
     expect(matcher).toContain("/auth/logout");
     expect(matcher).toContain("/api/auth/signup");
@@ -466,6 +495,8 @@ describe("Middleware Matcher Configuration", () => {
 
   it("should only contain the expected reduced route set", () => {
     expect(matcher).toEqual([
+      "/",
+      "/jey/agentic-engineering-intro",
       "/auth/login",
       "/login",
       "/apps/installed",
