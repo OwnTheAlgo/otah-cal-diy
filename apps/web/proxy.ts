@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const OTAH_MEMBER_BOOKING_PATHS: Record<string, string> = {
-  "jey.collab.ninja": "/jey/schedule-meet?user=jey&duration=20&overlayCalendar=true",
+  "jey.collab.ninja": "/jey/",
 };
 
 const safeGet = async <T = any>(key: string): Promise<T | undefined> => {
