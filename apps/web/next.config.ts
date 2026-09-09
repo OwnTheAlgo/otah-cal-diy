@@ -261,6 +261,14 @@ const nextConfig = (phase: string): NextConfig => {
       const { orgSlug } = nextJsOrgRewriteConfig;
       const beforeFiles = [
         {
+          source: "/privacy",
+          destination: "/legal/privacy.html",
+        },
+        {
+          source: "/terms",
+          destination: "/legal/terms.html",
+        },
+        {
           source: `/(${locales.join("|")})/:path*`,
           destination: "/:path*",
         },
